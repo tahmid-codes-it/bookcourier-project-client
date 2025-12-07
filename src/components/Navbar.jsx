@@ -8,7 +8,7 @@ const Navbar = () => {
   const { dark, setDark } = useTheme(); // Global theme
 
   return (
-    <nav className={`w-full fixed top-0 left-0 shadow-md z-50 transition-colors duration-300
+    <nav className={`w-full top-0 left-0 shadow-md z-50 transition-colors duration-300
       ${dark ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between p-4">
 

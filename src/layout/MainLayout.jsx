@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet } from 'react-router';
+import { Outlet } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { ToastContainer } from "react-toastify";
@@ -19,7 +19,7 @@ const MainLayout = () => {
                 theme="colored"
             />
 
-            <div className='flex-1'>
+            <div className='flex-1 '>
                 <Outlet />
             </div>
 

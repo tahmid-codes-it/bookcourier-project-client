@@ -23,7 +23,7 @@ const Navbar = () => {
           <Link to="/" className="hover:text-blue-600">Home</Link>
           <Link to="/books" className="hover:text-blue-600">Books</Link>
           <Link to="/dashboard" className="hover:text-blue-600">Dashboard</Link>
-          <Link to="/login" className="hover:text-blue-600">Login / Register</Link>
+          <Link to="/sign-in" className="hover:text-blue-600">Login / Register</Link>
 
           {/* Theme Toggle */}
           <button
@@ -48,7 +48,7 @@ const Navbar = () => {
           <Link to="/" className="hover:text-blue-600">Home</Link>
           <Link to="/books" className="hover:text-blue-600">Books</Link>
           <Link to="/dashboard" className="hover:text-blue-600">Dashboard</Link>
-          <Link to="/login" className="hover:text-blue-600">Login / Register</Link>
+          <Link to="/sign-in" className="hover:text-blue-600">Login / Register</Link>
 
           {/* Theme Toggle (Mobile) */}
           <button

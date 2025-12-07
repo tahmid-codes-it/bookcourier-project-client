@@ -1,16 +1,15 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import "./App.css";
+import Navbar from "./components/Navbar";
+import { Outlet } from "react-router-dom";
 
 function App() {
-  const [count, setCount] = useState(23)
-
   return (
-    <>
-      <h1>Book COurier Assignment</h1>
-    </>
-  )
+    <div className="transition-colors duration-300 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 min-h-screen">
+  <Navbar />
+  <Outlet />
+</div>
+
+  );
 }
 
-export default App
+export default App;

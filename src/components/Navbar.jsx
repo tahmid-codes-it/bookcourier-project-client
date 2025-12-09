@@ -28,10 +28,19 @@ const Navbar = () => {
           {/* Theme Toggle */}
           <button
             onClick={() => setDark(!dark)}
-            className="p-2 border rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+            className="p-2 border rounded-full transition-colors group
+             hover:bg-gray-200 dark:hover:bg-gray-800"
           >
-            {dark ? <Sun size={20} /> : <Moon size={20} />}
+            {dark ? (
+              <Sun size={20} />
+            ) : (
+              <Moon
+                size={20}
+                className="transition-colors group-hover:text-white"
+              />
+            )}
           </button>
+
         </div>
 
         {/* Mobile Hamburger */}

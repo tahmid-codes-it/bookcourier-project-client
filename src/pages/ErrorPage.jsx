@@ -4,6 +4,7 @@ import errorImg from "../assets/404-image.png";
 import { useTheme } from "../context/ThemeContext";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Btn from "../components/Button"
 
 const ErrorPage = () => {
   const { dark } = useTheme(); // Get global theme
@@ -24,7 +25,7 @@ const ErrorPage = () => {
         }
       `}</style>
 
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
+      <div className="flex-1 flex flex-col items-center justify-center text-center px-4 mt-12 mb-12">
 
         {/* Floating Image */}
         <img
@@ -37,16 +38,14 @@ const ErrorPage = () => {
           404 - Page Not Found
         </h1>
 
-        <p className="mt-4 text-lg opacity-80 max-w-md">
+        <p className="mt-4 text-lg opacity-80 max-w-md mb-5">
           Oops! Looks like the page you are looking for has floated away!
         </p>
 
-        <Link
-          to="/"
-          className="mt-6 px-6 py-3 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-all"
-        >
-          Back to Home
-        </Link>
+
+        <Btn to="/"
+        >Back to Home
+        </Btn>
       </div>
 
       <Footer />

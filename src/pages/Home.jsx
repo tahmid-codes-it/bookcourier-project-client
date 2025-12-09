@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import Skiper52 from "../components/Skiper52";  // ← Add this
 
 const Home = () => {
   const slides = [
@@ -24,9 +25,10 @@ const Home = () => {
   ];
 
   return (
-    <div className="pt-24"> 
+    <div className="pt-24">
       {/* top padding because navbar is fixed */}
-      
+
+      {/* Hero Carousel */}
       <div className="carousel w-full h-[450px] rounded-lg shadow-lg">
         {slides.map((slide, index) => (
           <div
@@ -76,9 +78,15 @@ const Home = () => {
           </div>
         ))}
       </div>
+
+      {/* ↓ Add your animated image gallery here ↓ */}
+      <div className="mt-16">
+        <Skiper52 />
+      </div>
     </div>
   );
 };
 
 export default Home;
+
 

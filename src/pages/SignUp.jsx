@@ -50,7 +50,7 @@ const SignUp = () => {
 
         {/* Right Form */}
         <div className="w-full md:w-1/2 p-8 md:p-10 mt-7 md:mt-0">
-          <h2 className="text-3xl font-bold mb-2">Create an Account</h2>
+          <h2 className="text-3xl font-bold mb-2 mt-3">Create an Account</h2>
           <p className={`${dark ? "text-gray-300" : "text-gray-600"} mb-6`}>
             Join BookCourier and explore thousands of books!
           </p>

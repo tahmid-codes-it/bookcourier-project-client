@@ -16,7 +16,7 @@ const AllBooks = () => {
   return (
     <div
       className={`min-h-screen px-6 py-12 transition-colors duration-300
-        ${dark ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"}
+        ${dark ? " text-white" : "bg-gray-100 text-gray-900"}
       `}
     >
       {/* Page Heading */}

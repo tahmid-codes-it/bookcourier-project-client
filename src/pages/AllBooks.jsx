@@ -57,7 +57,7 @@ const AllBooks = () => {
                   {book.description}
                 </p>
 
-                {/* CTA text (not a button anymore) */}
+                  
                 <span className="mt-4 inline-block text-blue-600 font-semibold">
                   View Details →
                 </span>

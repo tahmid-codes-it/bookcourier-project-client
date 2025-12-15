@@ -33,9 +33,10 @@ const AllBooks = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {books.map(book => (
-            <div
+            <Link
               key={book._id}
-              className={`rounded-2xl shadow-lg overflow-hidden hover:scale-105 transition-transform duration-300
+              to={`/all-books/${book._id}`}
+              className={`rounded-2xl shadow-lg overflow-hidden hover:scale-105 transition-transform duration-300 cursor-pointer
                 ${dark ? "bg-gray-800" : "bg-white"}
               `}
             >
@@ -56,16 +57,12 @@ const AllBooks = () => {
                   {book.description}
                 </p>
 
-                {/* Details Button */}
-                <Link
-                  to={`/all-books/${book._id}`}
-                  className="mt-4 inline-block text-center py-2 rounded-lg font-semibold
-                  bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                >
-                  View Details
-                </Link>
+                {/* CTA text (not a button anymore) */}
+                <span className="mt-4 inline-block text-blue-600 font-semibold">
+                  View Details →
+                </span>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

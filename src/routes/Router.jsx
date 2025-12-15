@@ -7,10 +7,11 @@ import MainLayout from "../layout/MainLayout";
 import ErrorPage from "../pages/ErrorPage"
 import Home from "../pages/Home";
 import AllBooks from "../pages/AllBooks";
+import BookDetails from "../pages/BookDetails";
 
 const router = createBrowserRouter([
 
-{
+  {
     path: "/",
     element: <MainLayout></MainLayout>,
     errorElement: <ErrorPage></ErrorPage>,
@@ -24,27 +25,31 @@ const router = createBrowserRouter([
         element: <AllBooks></AllBooks>,
       },
       {
+        path: "all-books/:id",
+        element: <BookDetails></BookDetails>
+      },
+      {
         path: "dashboard",
         element: <Dashboard></Dashboard>,
       },
-     
+
     ],
-},
+  },
 
-    {
-        path: "/sign-up",
-        element: <SignUp></SignUp>,
-    },
-    {
-        path: "/sign-in",
-        element: <Signin></Signin>,
-    },
+  {
+    path: "/sign-up",
+    element: <SignUp></SignUp>,
+  },
+  {
+    path: "/sign-in",
+    element: <Signin></Signin>,
+  },
 
-      {
+  {
     path: "*",
     element: <ErrorPage></ErrorPage>,
   },
 
-    ]);
+]);
 
-    export default router;
+export default router;

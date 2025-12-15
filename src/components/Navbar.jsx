@@ -21,7 +21,7 @@ const Navbar = () => {
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-6">
           <Link to="/" className="hover:text-blue-600">Home</Link>
-          <Link to="/books" className="hover:text-blue-600">Books</Link>
+          <Link to="/all-books" className="hover:text-blue-600">All Books</Link>
           <Link to="/dashboard" className="hover:text-blue-600">Dashboard</Link>
           <Link to="/sign-in" className="hover:text-blue-600">Login / Register</Link>
 
@@ -55,7 +55,7 @@ const Navbar = () => {
         <div className={`md:hidden flex flex-col gap-4 p-4 border-t transition-colors
           ${dark ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
           <Link to="/" className="hover:text-blue-600">Home</Link>
-          <Link to="/books" className="hover:text-blue-600">Books</Link>
+          <Link to="/all-books" className="hover:text-blue-600">All Books</Link>
           <Link to="/dashboard" className="hover:text-blue-600">Dashboard</Link>
           <Link to="/sign-in" className="hover:text-blue-600">Login / Register</Link>
 

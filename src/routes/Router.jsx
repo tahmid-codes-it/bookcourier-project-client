@@ -6,6 +6,7 @@ import Signin from "../pages/Signin";
 import MainLayout from "../layout/MainLayout";
 import ErrorPage from "../pages/ErrorPage"
 import Home from "../pages/Home";
+import AllBooks from "../pages/AllBooks";
 
 const router = createBrowserRouter([
 
@@ -19,8 +20,8 @@ const router = createBrowserRouter([
         element: <Home></Home>,
       },
       {
-        path: "books",
-        element: <Books></Books>,
+        path: "all-books",
+        element: <AllBooks></AllBooks>,
       },
       {
         path: "dashboard",

@@ -1,14 +1,65 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { Eye, EyeOff } from "lucide-react";
+
+import { auth } from "../firebase/Firebase.config";
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
 
 import signupImg from "../assets/book_stack.png";
 import logo from "../assets/google-logo-2025-6ffb.png";
 
 const SignUp = () => {
   const { dark } = useTheme();
+  const navigate = useNavigate();
+
   const [showPass, setShowPass] = useState(false);
+  const [error, setError] = useState("");
+
+  const googleProvider = new GoogleAuthProvider();
+
+  // 🔹 Email/Password Signup
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    const form = e.target;
+    const name = form.name.value;
+    const email = form.email.value;
+    const password = form.password.value;
+
+    try {
+      const result = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      await updateProfile(result.user, {
+        displayName: name,
+      });
+
+      navigate("/");
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  // 🔹 Google Signup
+  const handleGoogleSignup = async () => {
+    setError("");
+    try {
+      await signInWithPopup(auth, googleProvider);
+      navigate("/");
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   return (
     <div
@@ -32,10 +83,11 @@ const SignUp = () => {
         className={`w-full max-w-4xl shadow-xl rounded-2xl overflow-hidden flex flex-col md:flex-row
           ${dark ? "bg-gray-800 text-white" : "bg-white text-gray-900"} relative`}
       >
-        
         <div className="absolute top-4 right-4 md:left-4 lg:left-4 z-10">
           <Link to="/" className="flex items-center gap-2 text-xl font-bold">
-            <span className="bg-blue-600 text-white px-2 py-1 rounded-md">BC</span>
+            <span className="bg-blue-600 text-white px-2 py-1 rounded-md">
+              BC
+            </span>
           </Link>
         </div>
 
@@ -55,14 +107,15 @@ const SignUp = () => {
             Join BookCourier and explore thousands of books!
           </p>
 
-          <form className="space-y-4">
-
+          <form className="space-y-4" onSubmit={handleSignup}>
             {/* Name */}
             <div>
               <label className="text-sm font-medium">Full Name</label>
               <input
+                name="name"
                 type="text"
                 placeholder="Enter your name"
+                required
                 className={`input input-bordered w-full mt-1
                   ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
               />
@@ -72,22 +125,18 @@ const SignUp = () => {
             <div>
               <label className="text-sm font-medium">Email</label>
               <input
+                name="email"
                 type="email"
                 placeholder="Enter email"
+                required
                 className={`input input-bordered w-full mt-1
                   ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
               />
             </div>
 
-            {/* File Input */}
+            {/* File Input (UI only for now) */}
             <div className="w-full">
-              <label
-                className={`text-sm font-medium
-                  ${dark ? "text-gray-200" : "text-gray-700"}`}
-              >
-                Profile Photo
-              </label>
-
+              <label className="text-sm font-medium">Profile Photo</label>
               <input
                 type="file"
                 className={`file-input file-input-bordered w-full mt-1
@@ -98,16 +147,15 @@ const SignUp = () => {
             {/* Password */}
             <div>
               <label className="text-sm font-medium">Password</label>
-
               <div className="relative">
                 <input
+                  name="password"
                   type={showPass ? "text" : "password"}
                   placeholder="Enter password"
+                  required
                   className={`input input-bordered w-full mt-1
                     ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
                 />
-
-                {/* Show/Hide Password */}
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
@@ -117,6 +165,10 @@ const SignUp = () => {
                 </button>
               </div>
             </div>
+
+            {error && (
+              <p className="text-red-500 text-sm">{error}</p>
+            )}
 
             {/* Main Signup Button */}
             <button
@@ -129,8 +181,11 @@ const SignUp = () => {
             {/* Google Button */}
             <button
               type="button"
+              onClick={handleGoogleSignup}
               className={`btn w-full mt-2 flex items-center gap-2 border
-                ${dark ? "bg-gray-700 border-gray-500 text-white" : "bg-white border-gray-300"}`}
+                ${dark
+                  ? "bg-gray-700 border-gray-500 text-white"
+                  : "bg-white border-gray-300"}`}
             >
               <img src={logo} alt="Google" className="h-5 w-5" />
               Continue with Google
@@ -142,7 +197,6 @@ const SignUp = () => {
                 Login
               </Link>
             </p>
-
           </form>
         </div>
       </div>

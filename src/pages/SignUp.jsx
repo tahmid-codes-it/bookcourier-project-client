@@ -11,6 +11,8 @@ import {
   signInWithPopup,
 } from "firebase/auth";
 
+import { toast } from "react-toastify";
+
 import signupImg from "../assets/book_stack.png";
 import logo from "../assets/google-logo-2025-6ffb.png";
 
@@ -19,14 +21,14 @@ const SignUp = () => {
   const navigate = useNavigate();
 
   const [showPass, setShowPass] = useState(false);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const googleProvider = new GoogleAuthProvider();
 
   // 🔹 Email/Password Signup
   const handleSignup = async (e) => {
     e.preventDefault();
-    setError("");
+    setLoading(true);
 
     const form = e.target;
     const name = form.name.value;
@@ -34,30 +36,44 @@ const SignUp = () => {
     const password = form.password.value;
 
     try {
-      const result = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(result.user, { displayName: name });
 
-      await updateProfile(result.user, {
-        displayName: name,
-      });
-
-      navigate("/");
+      toast.success("Account created successfully!");
+      navigate("/"); // redirect after signup
     } catch (err) {
-      setError(err.message);
+      toast.error(getFriendlyErrorMessage(err.code));
+    } finally {
+      setLoading(false);
     }
   };
 
   // 🔹 Google Signup
   const handleGoogleSignup = async () => {
-    setError("");
+    setLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
+      toast.success("Signed in with Google!");
       navigate("/");
     } catch (err) {
-      setError(err.message);
+      toast.error(getFriendlyErrorMessage(err.code));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getFriendlyErrorMessage = (code) => {
+    switch (code) {
+      case "auth/email-already-in-use":
+        return "This email is already registered.";
+      case "auth/invalid-email":
+        return "Invalid email address.";
+      case "auth/weak-password":
+        return "Password should be at least 6 characters.";
+      case "auth/popup-closed-by-user":
+        return "Google sign-in popup closed.";
+      default:
+        return "Signup failed. Please try again.";
     }
   };
 
@@ -66,7 +82,6 @@ const SignUp = () => {
       className={`min-h-screen flex items-center justify-center px-4 transition-colors duration-300
       ${dark ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"}`}
     >
-      {/* Floating Animation */}
       <style>{`
         @keyframes float {
           0% { transform: translateY(0px); }
@@ -78,16 +93,13 @@ const SignUp = () => {
         }
       `}</style>
 
-      {/* Main Container */}
       <div
         className={`w-full max-w-4xl shadow-xl rounded-2xl overflow-hidden flex flex-col md:flex-row
           ${dark ? "bg-gray-800 text-white" : "bg-white text-gray-900"} relative`}
       >
         <div className="absolute top-4 right-4 md:left-4 lg:left-4 z-10">
           <Link to="/" className="flex items-center gap-2 text-xl font-bold">
-            <span className="bg-blue-600 text-white px-2 py-1 rounded-md">
-              BC
-            </span>
+            <span className="bg-blue-600 text-white px-2 py-1 rounded-md">BC</span>
           </Link>
         </div>
 
@@ -134,16 +146,6 @@ const SignUp = () => {
               />
             </div>
 
-            {/* File Input (UI only for now) */}
-            <div className="w-full">
-              <label className="text-sm font-medium">Profile Photo</label>
-              <input
-                type="file"
-                className={`file-input file-input-bordered w-full mt-1
-                  ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
-              />
-            </div>
-
             {/* Password */}
             <div>
               <label className="text-sm font-medium">Password</label>
@@ -166,16 +168,13 @@ const SignUp = () => {
               </div>
             </div>
 
-            {error && (
-              <p className="text-red-500 text-sm">{error}</p>
-            )}
-
             {/* Main Signup Button */}
             <button
               type="submit"
               className="btn btn-primary w-full mt-4 text-lg"
+              disabled={loading}
             >
-              Create Account
+              {loading ? "Processing..." : "Create Account"}
             </button>
 
             {/* Google Button */}
@@ -186,6 +185,7 @@ const SignUp = () => {
                 ${dark
                   ? "bg-gray-700 border-gray-500 text-white"
                   : "bg-white border-gray-300"}`}
+              disabled={loading}
             >
               <img src={logo} alt="Google" className="h-5 w-5" />
               Continue with Google

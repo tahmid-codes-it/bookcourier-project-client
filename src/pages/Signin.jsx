@@ -1,21 +1,54 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { Eye, EyeOff } from "lucide-react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebase/Firebase.config";
+import { toast } from "react-toastify";
 
-import signinImg from "../assets/book_stack.png"; // you can reuse the same image
+import signinImg from "../assets/book_stack.png";
 import logo from "../assets/google-logo-2025-6ffb.png";
 
 const SignIn = () => {
   const { dark } = useTheme();
   const [showPass, setShowPass] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toast.success("Login successful!");
+      navigate("/"); // redirect after login
+    } catch (error) {
+      const errorMessage = getAuthErrorMessage(error.code);
+      toast.error(errorMessage);
+    }
+  };
+
+  const getAuthErrorMessage = (code) => {
+    switch (code) {
+      case "auth/wrong-password":
+        return "Wrong password. Please try again.";
+      case "auth/user-not-found":
+        return "No account found with this email.";
+      case "auth/invalid-email":
+        return "Invalid email address.";
+      case "auth/too-many-requests":
+        return "Too many attempts. Try again later.";
+      default:
+        return "Login failed. Please try again.";
+    }
+  };
 
   return (
     <div
       className={`min-h-screen flex items-center justify-center px-4 transition-colors duration-300
       ${dark ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"}`}
     >
-      {/* Floating Animation */}
       <style>{`
         @keyframes float {
           0% { transform: translateY(0px); }
@@ -27,19 +60,16 @@ const SignIn = () => {
         }
       `}</style>
 
-      {/* Main Container */}
       <div
         className={`w-full max-w-4xl shadow-xl rounded-2xl overflow-hidden flex flex-col md:flex-row
           ${dark ? "bg-gray-800 text-white" : "bg-white text-gray-900"} relative`}
       >
-        {/* BC Logo at top-left of the card */}
         <div className="absolute top-4 right-4 md:left-4 lg:left-4 z-10">
           <Link to="/" className="flex items-center gap-2 text-xl font-bold">
             <span className="bg-blue-600 text-white px-2 py-1 rounded-md">BC</span>
           </Link>
         </div>
 
-        {/* Left Image */}
         <div className="w-full md:w-1/2 hidden md:flex items-center justify-center bg-transparent">
           <img
             src={signinImg}
@@ -48,39 +78,40 @@ const SignIn = () => {
           />
         </div>
 
-        {/* Right Form */}
         <div className="w-full md:w-1/2 p-8 md:p-10 mt-7 md:mt-0">
           <h2 className="text-3xl font-bold mb-2 mt-4">Welcome Back</h2>
           <p className={`${dark ? "text-gray-300" : "text-gray-600"} mb-6`}>
             Sign in to your account to continue exploring thousands of books!
           </p>
 
-          <form className="space-y-4">
-
+          <form className="space-y-4" onSubmit={handleLogin}>
             {/* Email */}
             <div>
               <label className="text-sm font-medium">Email</label>
               <input
                 type="email"
                 placeholder="Enter email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className={`input input-bordered w-full mt-1
                   ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
+                required
               />
             </div>
 
             {/* Password */}
             <div>
               <label className="text-sm font-medium">Password</label>
-
               <div className="relative">
                 <input
                   type={showPass ? "text" : "password"}
                   placeholder="Enter password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className={`input input-bordered w-full mt-1
                     ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
+                  required
                 />
-
-                {/* Show/Hide Password */}
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
@@ -99,7 +130,7 @@ const SignIn = () => {
               Sign In
             </button>
 
-            {/* Google SignIn Button */}
+            {/* Google SignIn Button (Optional Integration) */}
             <button
               type="button"
               className={`btn w-full mt-2 flex items-center gap-2 border
@@ -115,7 +146,6 @@ const SignIn = () => {
                 Sign Up
               </Link>
             </p>
-
           </form>
         </div>
       </div>

@@ -1,123 +1,184 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 
 const MyOrders = () => {
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const { dark } = useTheme();
 
-  const [orders, setOrders] = useState([
-    {
-      id: "1",
-      title: "Atomic Habits",
-      orderDate: "2025-01-10",
-      status: "pending",
-    },
-    {
-      id: "2",
-      title: "Deep Work",
-      orderDate: "2025-01-05",
-      status: "paid",
-    },
-    {
-      id: "3",
-      title: "Clean Code",
-      orderDate: "2025-01-02",
-      status: "cancelled",
-    },
-  ]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState("");
 
-  const handleCancel = (id) => {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === id
-          ? { ...order, status: "cancelled" }
-          : order
-      )
-    );
+  useEffect(() => {
+    if (!user?.email) return;
+
+    fetch(`http://localhost:3000/orders?email=${user.email}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setOrders(data);
+        setLoading(false);
+      });
+  }, [user]);
+
+  const handleCancelOrder = async (id) => {
+    const confirm = window.confirm("Are you sure you want to cancel?");
+    if (!confirm) return;
+
+    const res = await fetch(`http://localhost:3000/orders/cancel/${id}`, {
+      method: "PATCH",
+    });
+
+    if (res.ok) {
+      setOrders((prev) =>
+        prev.map((o) => (o._id === id ? { ...o, status: "cancelled" } : o))
+      );
+    }
   };
 
-  const handlePayNow = (id) => {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === id
-          ? { ...order, status: "paid" }
-          : order
-      )
+  const handleConfirmPayment = async () => {
+    if (!paymentMethod) {
+      alert("Please select a payment method");
+      return;
+    }
+
+    const res = await fetch(
+      `http://localhost:3000/orders/pay/${selectedOrder._id}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentMethod }),
+      }
     );
+
+    if (res.ok) {
+      setOrders((prev) => prev.filter((o) => o._id !== selectedOrder._id));
+      setSelectedOrder(null);
+      setPaymentMethod("");
+    }
   };
+
+  if (loading) {
+    return <p className="text-center mt-20">Loading orders...</p>;
+  }
 
   return (
     <div
-      className={`min-h-screen p-6 transition-colors duration-300
-      ${dark ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"}`}
+      className={`min-h-screen px-6 py-10 transition-colors ${
+        dark ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
+      }`}
     >
-      <h2 className="text-3xl font-bold mb-6">My Orders</h2>
-
       <div
-        className={`overflow-x-auto shadow rounded-lg
-        ${dark ? "bg-gray-800" : "bg-white"}`}
+        className={`max-w-6xl mx-auto rounded-xl shadow-lg p-6 ${
+          dark ? "bg-gray-800" : "bg-white"
+        }`}
       >
-        <table className="table w-full">
-          <thead className={`${dark ? "bg-gray-700" : "bg-gray-200"}`}>
-            <tr>
-              <th>#</th>
-              <th>Book Title</th>
-              <th>Order Date</th>
-              <th>Status</th>
-              <th className="text-center">Actions</th>
-            </tr>
-          </thead>
+        <h2 className="text-3xl font-bold mb-6">My Orders</h2>
 
-          <tbody>
-            {orders.map((order, index) => (
-              <tr
-                key={order.id}
-                className={`${dark ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}
-              >
-                <td>{index + 1}</td>
-                <td className="font-medium">{order.title}</td>
-                <td>{order.orderDate}</td>
-
-                <td>
-                  {order.status === "pending" && (
-                    <span className="badge badge-warning">Pending</span>
-                  )}
-                  {order.status === "paid" && (
-                    <span className="badge badge-success">Paid</span>
-                  )}
-                  {order.status === "cancelled" && (
-                    <span className="badge badge-error">Cancelled</span>
-                  )}
-                </td>
-
-                <td className="text-center space-x-2">
-                  {order.status === "pending" ? (
-                    <>
-                      <button
-                        onClick={() => handlePayNow(order.id)}
-                        className="btn btn-sm btn-success"
-                      >
-                        Pay Now
-                      </button>
-                      <button
-                        onClick={() => handleCancel(order.id)}
-                        className="btn btn-sm btn-error"
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <span className="text-gray-400 text-sm">
-                      No actions
-                    </span>
-                  )}
-                </td>
+        {orders.length === 0 ? (
+          <p className="opacity-70">No active orders</p>
+        ) : (
+          <table className="table w-full">
+            <thead>
+              <tr>
+                <th>Book</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {orders.map((order) => (
+                <tr key={order._id}>
+                  <td className="flex items-center gap-3">
+                    <img
+                      src={order.bookImage}
+                      alt={order.bookTitle}
+                      className="w-12 h-16 object-cover rounded"
+                    />
+                    <span>{order.bookTitle}</span>
+                  </td>
+
+                  <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+
+                  <td>
+                    <span className="font-semibold text-yellow-500">
+                      Order Placed
+                    </span>
+                  </td>
+
+                  <td>
+                    <span className="font-semibold text-orange-500">
+                      unpaid
+                    </span>
+                  </td>
+
+                  <td>
+                    {order.status === "pending" && (
+                      <>
+                        <button
+                          onClick={() => handleCancelOrder(order._id)}
+                          className="btn btn-sm btn-error mr-2"
+                        >
+                          Cancel
+                        </button>
+
+                        <button
+                          onClick={() => setSelectedOrder(order)}
+                          className="btn btn-sm btn-primary"
+                        >
+                          Pay Now
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
+
+      {/* PAYMENT MODAL */}
+      {selectedOrder && (
+        <dialog open className="modal">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">Confirm Payment</h3>
+
+            <select
+              className="select select-bordered w-full mb-4"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            >
+              <option value="">Select Payment Method</option>
+              <option>Bkash</option>
+              <option>Nagad</option>
+              <option>Rocket</option>
+              <option>Bank</option>
+            </select>
+
+            <p className="text-sm opacity-70 mb-4">
+              <strong>N.B:</strong> Book Price 120tk + Delivery 60tk = 180tk
+            </p>
+
+            <div className="modal-action">
+              <button
+                onClick={handleConfirmPayment}
+                className="btn btn-success"
+              >
+                Confirm Payment
+              </button>
+
+              <button onClick={() => setSelectedOrder(null)} className="btn">
+                Close
+              </button>
+            </div>
+          </div>
+        </dialog>
+      )}
     </div>
   );
 };

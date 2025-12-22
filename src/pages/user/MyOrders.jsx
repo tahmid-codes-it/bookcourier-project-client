@@ -14,10 +14,18 @@ const MyOrders = () => {
   useEffect(() => {
     if (!user?.email) return;
 
-    fetch(`http://localhost:3000/orders?email=${user.email}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setOrders(data);
+    // 🔹 Fetch orders and invoices
+    Promise.all([
+      fetch(`http://localhost:3000/orders?email=${user.email}`).then((res) => res.json()),
+      fetch(`http://localhost:3000/invoices?email=${user.email}`).then((res) => res.json()),
+    ])
+      .then(([ordersData, invoicesData]) => {
+        const paidOrders = invoicesData.map((inv) => ({ ...inv, status: "paid" }));
+        setOrders([...ordersData, ...paidOrders]);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch orders", err);
         setLoading(false);
       });
   }, [user]);
@@ -106,13 +114,13 @@ const MyOrders = () => {
 
                   <td>
                     <span className="font-semibold text-yellow-500">
-                      Order Placed
+                      {order.status === "paid" ? "Paid" : "Order Placed"}
                     </span>
                   </td>
 
                   <td>
                     <span className="font-semibold text-orange-500">
-                      unpaid
+                      {order.status === "paid" ? "paid" : "unpaid"}
                     </span>
                   </td>
 
@@ -161,7 +169,7 @@ const MyOrders = () => {
             </select>
 
             <p className="text-sm opacity-70 mb-4">
-              <strong>N.B:</strong> Book Price 120tk + Delivery 60tk = 180tk
+              <strong>N.B:</strong> Delivery 60tk
             </p>
 
             <div className="modal-action">

@@ -63,6 +63,8 @@ const BookDetails = () => {
     }
   };
 
+  const isDisabled = !user || book.stock <= 0 || user.role === "admin" || user.role === "librarian";
+
   return (
     <div
       className={`min-h-screen px-6 py-12 transition-colors duration-300
@@ -99,20 +101,30 @@ const BookDetails = () => {
               {book.stock > 0 ? (
                 <span className="text-green-500 font-semibold">Available</span>
               ) : (
-                <span className="text-red-500 font-semibold">
-                  Not Available
-                </span>
+                <span className="text-red-500 font-semibold">Not Available</span>
               )}
             </p>
 
+            {/* 🔹 ORDER BUTTON */}
             <button
               onClick={() => setShowModal(true)}
-              disabled={book.stock <= 0 || !user}
+              disabled={isDisabled}
               className="mt-6 px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50"
             >
               Order Now
             </button>
 
+            {/* 🔹 USER ROLE MESSAGES */}
+            {user?.role === "admin" && (
+              <p className="text-sm text-yellow-500 mt-2">
+                Admins cannot place orders
+              </p>
+            )}
+            {user?.role === "librarian" && (
+              <p className="text-sm text-yellow-500 mt-2">
+                Librarians cannot place orders
+              </p>
+            )}
             {!user && (
               <p className="text-sm text-red-400 mt-2">
                 Please login to place an order

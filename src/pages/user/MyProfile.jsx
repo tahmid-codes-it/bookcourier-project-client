@@ -11,24 +11,51 @@ const MyProfile = () => {
   const [name, setName] = useState("");
   const [photoPreview, setPhotoPreview] = useState("");
   const [message, setMessage] = useState("");
-  const [role, setRole] = useState("user"); // default role
+  const [role, setRole] = useState("user");
   const [roleRequestMsg, setRoleRequestMsg] = useState("");
+  const [userId, setUserId] = useState(""); // store DB user _id
+
+  // 🔹 FETCH USER DATA FROM BACKEND
+  const fetchUserData = async () => {
+    try {
+      const res = await fetch(
+        `http://localhost:3000/users/${user.email}`
+      );
+      const data = await res.json();
+
+      setRole(data.isLibrarian ? "librarian" : data.role);
+      setUserId(data._id);
+
+      // 🔹 Show toast if notify flag is true
+      if (data.notify) {
+        const switchRole = window.confirm(data.message);
+        if (switchRole) {
+          // Toggle role locally
+          setRole(data.isLibrarian ? "librarian" : "user");
+        }
+
+        // Reset notify flag in backend
+        await fetch(`http://localhost:3000/users/reset-notify/${data._id}`, {
+          method: "PATCH",
+        });
+      }
+    } catch (error) {
+      console.error("Fetch user error:", error);
+    }
+  };
 
   useEffect(() => {
     if (user) {
       setName(user.displayName || "");
       setPhotoPreview(user.photoURL || "");
-      // 🔹 later: fetch role from DB
-      setRole("user");
+      fetchUserData();
     }
   }, [user]);
 
   // 🔹 Image preview only
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setPhotoPreview(URL.createObjectURL(file));
-    }
+    if (file) setPhotoPreview(URL.createObjectURL(file));
   };
 
   // 🔹 Update profile name
@@ -37,21 +64,33 @@ const MyProfile = () => {
     setMessage("");
 
     try {
-      await updateProfile(user, {
-        displayName: name,
-      });
+      await updateProfile(user, { displayName: name });
       setMessage("Profile updated successfully ✅");
     } catch (error) {
       setMessage("Failed to update profile ❌");
     }
   };
 
-  // 🔹 Request Librarian Access (SAFE)
-  const handleLibrarianRequest = () => {
-    // later: send this to backend / database
-    setRoleRequestMsg(
-      "Your request to become a Librarian has been sent. Please wait for admin approval ⏳"
-    );
+  // 🔹 Request Librarian Access
+  const handleLibrarianRequest = async () => {
+    try {
+      const res = await fetch(
+        "http://localhost:3000/users/request-librarian",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email }),
+        }
+      );
+
+      if (res.ok) {
+        setRoleRequestMsg(
+          "Your request to become a Librarian has been sent. Please wait for admin approval ⏳"
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -75,7 +114,6 @@ const MyProfile = () => {
             alt="Profile"
             className="w-28 h-28 rounded-full object-cover border-4 border-blue-500"
           />
-
           <div>
             <p className="text-xl font-semibold">
               {user?.displayName || "Unnamed User"}
@@ -90,7 +128,6 @@ const MyProfile = () => {
 
         {/* Update Form */}
         <form onSubmit={handleUpdateProfile} className="space-y-5">
-          {/* Name */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Full Name
@@ -104,7 +141,6 @@ const MyProfile = () => {
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Email
@@ -117,7 +153,6 @@ const MyProfile = () => {
             />
           </div>
 
-          {/* Image Preview */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Profile Photo (Preview)
@@ -135,15 +170,10 @@ const MyProfile = () => {
           </div>
 
           {message && (
-            <p className="text-sm text-green-500 font-medium">
-              {message}
-            </p>
+            <p className="text-sm text-green-500 font-medium">{message}</p>
           )}
 
-          <button
-            type="submit"
-            className="btn btn-primary w-full text-lg"
-          >
+          <button type="submit" className="btn btn-primary w-full text-lg">
             Update Profile
           </button>
         </form>
@@ -154,9 +184,7 @@ const MyProfile = () => {
             className={`mt-10 p-5 rounded-xl border
             ${dark ? "border-gray-700 bg-gray-900" : "border-gray-200 bg-gray-50"}`}
           >
-            <h3 className="text-xl font-semibold mb-2">
-              Become a Librarian
-            </h3>
+            <h3 className="text-xl font-semibold mb-2">Become a Librarian</h3>
             <p className="text-sm opacity-80 mb-4">
               Librarians can manage books and inventory. Your request will be
               reviewed by an admin.
@@ -170,9 +198,7 @@ const MyProfile = () => {
             </button>
 
             {roleRequestMsg && (
-              <p className="text-sm text-green-500 mt-3">
-                {roleRequestMsg}
-              </p>
+              <p className="text-sm text-green-500 mt-3">{roleRequestMsg}</p>
             )}
           </div>
         )}

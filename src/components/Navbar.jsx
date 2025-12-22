@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Menu,
@@ -6,154 +6,177 @@ import {
   Sun,
   Moon,
   LogOut,
-  Shield
+  Shield,
+  Users,
+  BookOpen,
+  User,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import { toast } from "react-toastify"; 
+import "react-toastify/dist/ReactToastify.css";
 
 const Navbar = () => {
-  const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
   const { dark, setDark } = useTheme();
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
   const navigate = useNavigate();
 
   const isAdmin = user?.role === "admin";
+  const isLibrarian = user?.role === "librarian";
 
-  // ✅ SAFE LOGOUT HANDLER
-  const handleLogout = async () => {
-    try {
-      await logout();
-      setProfileOpen(false);
-      setOpen(false);
-      navigate("/sign-in");
-    } catch (error) {
-      console.error("Logout failed:", error);
+  // 🔹 Handle Librarian toast
+  useEffect(() => {
+    if (user?.notify && !isAdmin) {
+      // Only show toast if the user is not admin
+      if (user.isLibrarian) {
+        toast.info(
+          <div>
+            Your Librarian Access granted. Do you want to switch now?
+            <div className="mt-2 flex gap-2">
+              <button
+                onClick={() => {
+                  setUser({ ...user, role: "librarian", notify: false });
+                  localStorage.setItem(
+                    "bc-auth",
+                    JSON.stringify({ ...user, role: "librarian", notify: false })
+                  );
+                  toast.dismiss();
+                }}
+                className="px-3 py-1 bg-blue-500 text-white rounded"
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => {
+                  setUser({ ...user, notify: false });
+                  localStorage.setItem(
+                    "bc-auth",
+                    JSON.stringify({ ...user, notify: false })
+                  );
+                  toast.dismiss();
+                }}
+                className="px-3 py-1 bg-gray-400 text-white rounded"
+              >
+                No
+              </button>
+            </div>
+          </div>,
+          { autoClose: false }
+        );
+      } else {
+        // If librarian removed, just show a simple toast
+        toast.info("Your Librarian Access removed. You are now a User.");
+        setUser({ ...user, notify: false });
+        localStorage.setItem(
+          "bc-auth",
+          JSON.stringify({ ...user, notify: false })
+        );
+      }
     }
+  }, [user, setUser, isAdmin]);
+
+  const handleLogout = async () => {
+    await logout();
+    setProfileOpen(false);
+    setMenuOpen(false);
+    navigate("/sign-in");
   };
 
   return (
     <nav
-      className={`w-full top-0 left-0 shadow-md z-50 transition-colors duration-300
-      ${dark ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}
+      className={`w-full shadow-md z-50 transition-colors ${
+        dark ? "bg-gray-900 text-white" : "bg-white text-gray-900"
+      }`}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between p-4">
-
-        {/* Logo */}
+        {/* LOGO */}
         <Link to="/" className="flex items-center gap-2 text-xl font-bold">
           <span className="bg-blue-600 text-white px-2 py-1 rounded-md">BC</span>
           BookCourier
         </Link>
 
-        {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-6">
-          <Link to="/" className="hover:text-blue-600">Home</Link>
-          <Link to="/all-books" className="hover:text-blue-600">All Books</Link>
-          <Link to="/about-us" className="hover:text-blue-600">About Us</Link>
+        {/* DESKTOP MENU */}
+        <div className="hidden md:flex items-center gap-9">
+          <NavLink to="/" dark={dark}>Home</NavLink>
+          <NavLink to="/all-books" dark={dark}>All Books</NavLink>
+          <NavLink to="/about-us" dark={dark}>About Us</NavLink>
 
-          {/* Theme Toggle */}
-          <button
-            onClick={() => setDark(!dark)}
-            className="p-2 border rounded-full hover:bg-gray-200 dark:hover:bg-gray-800"
-          >
+          {/* THEME TOGGLE */}
+          <button onClick={() => setDark(!dark)} className="p-2 border rounded-full">
             {dark ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
-          {/* Auth Section */}
+          {/* AUTH */}
           {!user ? (
-            <Link to="/sign-in" className="hover:text-blue-600">
+            <Link to="/sign-in" className="font-medium">
               Login / Register
             </Link>
           ) : (
             <div className="relative">
-              {/* Profile Image */}
-              <img
-                src={user.photoURL || "https://i.ibb.co/9GdWwzN/user.png"}
-                alt="User"
+              {/* PROFILE BUTTON */}
+              <button
                 onClick={() => setProfileOpen(!profileOpen)}
-                className="h-10 w-10 rounded-full cursor-pointer border-2 border-blue-500"
-              />
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                  dark ? "hover:bg-gray-800" : "hover:bg-gray-200"
+                }`}
+              >
+                {isAdmin ? (
+                  <>
+                    <Shield size={18} />
+                    <span className="font-semibold">Welcome Admin</span>
+                  </>
+                ) : isLibrarian ? (
+                  <>
+                    <User size={18} />
+                    <span className="font-semibold">Welcome Librarian</span>
+                  </>
+                ) : (
+                  <>
+                    <User size={18} />
+                    <span className="font-semibold">{user.displayName || "User"}</span>
+                  </>
+                )}
+              </button>
 
-              {/* Dropdown */}
+              {/* DROPDOWN */}
               {profileOpen && (
                 <div
-                  className={`absolute right-0 mt-2 w-52 rounded-lg shadow-lg p-2
-                  ${dark ? "bg-gray-800 text-white" : "bg-white text-gray-900"}`}
+                  className={`absolute right-0 mt-2 w-56 rounded-xl shadow-lg p-2 ${
+                    dark ? "bg-gray-800" : "bg-white"
+                  }`}
                 >
-                  <p
-                    className={`text-sm px-2 py-1 mb-1 truncate font-medium border-b
-                    ${dark ? "border-gray-700" : "border-gray-200"}`}
-                  >
-                    {user.displayName || "User"}
-                  </p>
-
-                  {/* ADMIN MENU */}
-                  {isAdmin ? (
+                  {isAdmin && (
                     <>
-                      <Link
-                        to="/admin/dashboard"
-                        onClick={() => setProfileOpen(false)}
-                        className="block px-3 py-2 rounded-md hover:bg-blue-100 hover:text-white dark:hover:bg-gray-700"
-                      >
-                        <span className="flex items-center gap-2">
-                          <Shield size={16} />
-                          Admin Dashboard
-                        </span>
-                      </Link>
-
-                      <Link
-                        to="/admin/books"
-                        onClick={() => setProfileOpen(false)}
-                        className="block px-3 py-2 rounded-md hover:bg-blue-100 hover:text-white dark:hover:bg-gray-700"
-                      >
-                        Manage Books
-                      </Link>
-
-                      <Link
-                        to="/admin/orders"
-                        onClick={() => setProfileOpen(false)}
-                        className="block px-3 py-2 rounded-md hover:bg-blue-100 hover:text-white dark:hover:bg-gray-700"
-                      >
-                        Manage Orders
-                      </Link>
-                    </>
-                  ) : (
-                    <>
-                      {/* USER MENU */}
-                      <Link
-                        to="/profile"
-                        onClick={() => setProfileOpen(false)}
-                        className="block px-3 py-2 rounded-md hover:bg-blue-100 hover:text-white dark:hover:bg-gray-700"
-                      >
-                        My Profile
-                      </Link>
-
-                      <Link
-                        to="/my-orders"
-                        onClick={() => setProfileOpen(false)}
-                        className="block px-3 py-2 rounded-md hover:bg-blue-100 hover:text-white dark:hover:bg-gray-700"
-                      >
-                        My Orders
-                      </Link>
-
-                      <Link
-                        to="/invoices"
-                        onClick={() => setProfileOpen(false)}
-                        className="block px-3 py-2 rounded-md hover:bg-blue-100 hover:text-white dark:hover:bg-gray-700"
-                      >
-                        Invoices
-                      </Link>
+                      <DropdownLink to="/all-users" icon={<Users size={16} />} dark={dark} text="All Users" />
+                      <DropdownLink to="/manage-books" icon={<BookOpen size={16} />} dark={dark} text="Manage Books" />
+                      <DropdownLink to="/my-profile" icon={<User size={16} />} dark={dark} text="My Profile" />
                     </>
                   )}
 
-                  {/* LOGOUT */}
+                  {isLibrarian && (
+                    <>
+                      <DropdownLink to="/my-books" dark={dark} text="My Books" />
+                      <DropdownLink to="/all-orders" dark={dark} text="Orders" />
+                      <DropdownLink to="/add-book" dark={dark} text="Add Book" />
+                    </>
+                  )}
+
+                  {!isAdmin && !isLibrarian && (
+                    <>
+                      <DropdownLink to="/profile" dark={dark} text="My Profile" />
+                      <DropdownLink to="/my-orders" dark={dark} text="My Orders" />
+                      <DropdownLink to="/invoices" dark={dark} text="Invoices" />
+                    </>
+                  )}
+
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-3 py-2 mt-1 text-red-500 hover:bg-red-100 hover:text-white dark:hover:bg-gray-700 rounded-md"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-red-500 hover:bg-red-100 dark:hover:bg-gray-700"
                   >
-                    <LogOut size={18} />
-                    Logout
+                    <LogOut size={16} /> Logout
                   </button>
                 </div>
               )}
@@ -161,58 +184,107 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile Menu Button */}
-        <button onClick={() => setOpen(!open)} className="md:hidden">
-          {open ? <X size={28} /> : <Menu size={28} />}
+        {/* MOBILE TOGGLE */}
+        <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden">
+          {menuOpen ? <X size={26} /> : <Menu size={26} />}
         </button>
       </div>
 
-      {/* Mobile Menu */}
-      {open && (
+      {/* MOBILE MENU */}
+      {menuOpen && (
         <div
-          className={`md:hidden flex flex-col gap-4 p-4 border-t
-          ${dark ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}
+          className={`md:hidden flex flex-col gap-2 p-4 ${
+            dark ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
+          }`}
         >
-          <Link to="/" onClick={() => setOpen(false)}>Home</Link>
-          <Link to="/all-books" onClick={() => setOpen(false)}>All Books</Link>
-          <Link to="/about" onClick={() => setOpen(false)}>About Us</Link>
-
-          {user && (
-            isAdmin ? (
-              <>
-                <Link to="/admin/dashboard">Admin Dashboard</Link>
-                <Link to="/admin/books">Manage Books</Link>
-                <Link to="/admin/orders">Manage Orders</Link>
-              </>
-            ) : (
-              <>
-                <Link to="/profile">My Profile</Link>
-                <Link to="/my-orders">My Orders</Link>
-                <Link to="/invoices">Invoices</Link>
-              </>
-            )
-          )}
-
-          {user ? (
-            <button onClick={handleLogout} className="text-red-500 flex gap-2">
-              <LogOut size={18} />
-              Logout
-            </button>
-          ) : (
-            <Link to="/sign-in">Login / Register</Link>
-          )}
-
-          {/* Theme Toggle */}
+          {/* THEME TOGGLE */}
           <button
             onClick={() => setDark(!dark)}
-            className="p-2 border rounded-full w-fit"
+            className="p-2 border rounded-full w-max mb-2"
           >
             {dark ? <Sun size={20} /> : <Moon size={20} />}
           </button>
+
+          <MobileLink to="/" dark={dark} text="Home" />
+          <MobileLink to="/all-books" dark={dark} text="All Books" />
+          <MobileLink to="/about-us" dark={dark} text="About Us" />
+
+          {!user ? (
+            <MobileLink to="/sign-in" dark={dark} text="Login / Register" />
+          ) : (
+            <>
+              {isAdmin && (
+                <>
+                  <MobileLink to="/all-users" dark={dark} text="All Users" />
+                  <MobileLink to="/manage-books" dark={dark} text="Manage Books" />
+                  <MobileLink to="/my-profile" dark={dark} text="My Profile" />
+                </>
+              )}
+
+              {isLibrarian && (
+                <>
+                  <MobileLink to="/my-books" dark={dark} text="My Books" />
+                  <MobileLink to="/all-orders" dark={dark} text="Orders" />
+                  <MobileLink to="/add-book" dark={dark} text="Add Book" />
+                </>
+              )}
+
+              {!isAdmin && !isLibrarian && (
+                <>
+                  <MobileLink to="/profile" dark={dark} text="My Profile" />
+                  <MobileLink to="/my-orders" dark={dark} text="My Orders" />
+                  <MobileLink to="/invoices" dark={dark} text="Invoices" />
+                </>
+              )}
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-red-500 hover:bg-red-100 dark:hover:bg-gray-700"
+              >
+                <LogOut size={16} /> Logout
+              </button>
+            </>
+          )}
         </div>
       )}
     </nav>
   );
 };
+
+/* Reusable desktop link */
+const NavLink = ({ to, children, dark }) => (
+  <Link
+    to={to}
+    className={`px-3 py-2 rounded-md transition-colors ${
+      dark ? "hover:bg-gray-800" : "hover:bg-gray-200"
+    }`}
+  >
+    {children}
+  </Link>
+);
+
+/* Dropdown link */
+const DropdownLink = ({ to, icon, text, dark }) => (
+  <Link
+    to={to}
+    className={`flex items-center gap-2 px-3 py-2 rounded-md ${
+      dark ? "hover:bg-gray-700" : "hover:bg-gray-200"
+    }`}
+  >
+    {icon} {text}
+  </Link>
+);
+
+/* Mobile link */
+const MobileLink = ({ to, text, dark }) => (
+  <Link
+    to={to}
+    className={`px-3 py-2 rounded-md ${
+      dark ? "hover:bg-gray-800" : "hover:bg-gray-200"
+    }`}
+  >
+    {text}
+  </Link>
+);
 
 export default Navbar;

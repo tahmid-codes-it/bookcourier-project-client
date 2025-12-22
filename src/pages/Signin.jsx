@@ -2,15 +2,14 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { Eye, EyeOff } from "lucide-react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase/Firebase.config";
 import { toast } from "react-toastify";
+import { useAuth } from "../context/AuthContext"; // ✅ ADDED
 
 import signinImg from "../assets/book_stack.png";
-import logo from "../assets/google-logo-2025-6ffb.png";
 
 const SignIn = () => {
   const { dark } = useTheme();
+  const { login } = useAuth(); // ✅ ADDED
   const [showPass, setShowPass] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,27 +19,36 @@ const SignIn = () => {
     e.preventDefault();
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      toast.success("Login successful!");
-      navigate("/"); // redirect after login
-    } catch (error) {
-      const errorMessage = getAuthErrorMessage(error.code);
-      toast.error(errorMessage);
-    }
-  };
+      const res = await fetch("http://localhost:3000/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-  const getAuthErrorMessage = (code) => {
-    switch (code) {
-      case "auth/wrong-password":
-        return "Wrong password. Please try again.";
-      case "auth/user-not-found":
-        return "No account found with this email.";
-      case "auth/invalid-email":
-        return "Invalid email address.";
-      case "auth/too-many-requests":
-        return "Too many attempts. Try again later.";
-      default:
-        return "Login failed. Please try again.";
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      // ✅ FIX: update AuthContext instead of only localStorage
+      login({
+        email: data.email,
+        role: data.role,
+      });
+
+      toast.success("Login successful!");
+
+      // ✅ ROLE BASED REDIRECT
+      if (data.role === "admin") {
+        navigate("/all-users");
+      } else if (data.role === "librarian") {
+        navigate("/my-books");
+      } else {
+        navigate("/");
+      }
+    } catch (error) {
+      toast.error(error.message);
     }
   };
 
@@ -62,15 +70,19 @@ const SignIn = () => {
 
       <div
         className={`w-full max-w-4xl shadow-xl rounded-2xl overflow-hidden flex flex-col md:flex-row
-          ${dark ? "bg-gray-800 text-white" : "bg-white text-gray-900"} relative`}
+        ${dark ? "bg-gray-800 text-white" : "bg-white text-gray-900"} relative`}
       >
-        <div className="absolute top-4 right-4 md:left-4 lg:left-4 z-10">
+        {/* Logo */}
+        <div className="absolute top-4 left-4 z-10">
           <Link to="/" className="flex items-center gap-2 text-xl font-bold">
-            <span className="bg-blue-600 text-white px-2 py-1 rounded-md">BC</span>
+            <span className="bg-blue-600 text-white px-2 py-1 rounded-md">
+              BC
+            </span>
           </Link>
         </div>
 
-        <div className="w-full md:w-1/2 hidden md:flex items-center justify-center bg-transparent">
+        {/* Image */}
+        <div className="w-full md:w-1/2 hidden md:flex items-center justify-center">
           <img
             src={signinImg}
             alt="SignIn Banner"
@@ -78,6 +90,7 @@ const SignIn = () => {
           />
         </div>
 
+        {/* Form */}
         <div className="w-full md:w-1/2 p-8 md:p-10 mt-7 md:mt-0">
           <h2 className="text-3xl font-bold mb-2 mt-4">Welcome Back</h2>
           <p className={`${dark ? "text-gray-300" : "text-gray-600"} mb-6`}>
@@ -94,7 +107,7 @@ const SignIn = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={`input input-bordered w-full mt-1
-                  ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
+                ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
                 required
               />
             </div>
@@ -109,7 +122,7 @@ const SignIn = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={`input input-bordered w-full mt-1
-                    ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
+                  ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
                   required
                 />
                 <button
@@ -122,22 +135,12 @@ const SignIn = () => {
               </div>
             </div>
 
-            {/* Main SignIn Button */}
+            {/* Submit */}
             <button
               type="submit"
               className="btn btn-primary w-full mt-4 text-lg"
             >
               Sign In
-            </button>
-
-            {/* Google SignIn Button (Optional Integration) */}
-            <button
-              type="button"
-              className={`btn w-full mt-2 flex items-center gap-2 border
-                ${dark ? "bg-gray-700 border-gray-500 text-white" : "bg-white border-gray-300"}`}
-            >
-              <img src={logo} alt="Google" className="h-5 w-5" />
-              Continue with Google
             </button>
 
             <p className="text-center mt-4 mb-7">

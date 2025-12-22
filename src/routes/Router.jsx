@@ -18,6 +18,13 @@ import Invoices from "../pages/user/Invoices";
 import AddBook from "../pages/librarian/AddBook";
 import MyBooks from "../pages/librarian/MyBooks";
 import AllOrders from "../pages/librarian/AllOrders";
+import EditBook from "../pages/librarian/EditBook";
+
+// 👑 Admin pages
+import AllUsers from "../pages/admin/AllUsers";
+import ManageBooks from "../pages/admin/ManageBooks";
+import AdminProfile from "../pages/admin/MyProfile"; // reuse user profile
+
 
 const router = createBrowserRouter([
   {
@@ -26,7 +33,6 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { index: true, element: <Home /> },
-
       { path: "all-books", element: <AllBooks /> },
       { path: "about-us", element: <AboutUs /> },
       { path: "all-books/:id", element: <BookDetails /> },
@@ -39,11 +45,17 @@ const router = createBrowserRouter([
       // 📚 LIBRARIAN ROUTES
       { path: "add-book", element: <AddBook /> },
       { path: "my-books", element: <MyBooks /> },
-      { path: "all-orders", element: <AllOrders></AllOrders> },
+      { path: "all-orders", element: <AllOrders /> },
+      { path: "my-books/edit/:id", element: <EditBook /> },
+
+      // 👑 ADMIN ROUTES (accessible via dropdown in profile)
+      { path: "all-users", element: <AllUsers /> },
+      { path: "manage-books", element: <ManageBooks /> },
+      { path: "profile", element: <AdminProfile /> },
     ],
   },
 
-  // 🔐 Auth routes
+  // 🔐 AUTH ROUTES
   { path: "/sign-up", element: <SignUp /> },
   { path: "/sign-in", element: <Signin /> },
 

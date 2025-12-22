@@ -1,58 +1,81 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTheme } from "../../context/ThemeContext";
 
 const AllOrders = () => {
   const { dark } = useTheme();
 
-  // 🔹 Mock orders (replace with API later)
-  const [orders, setOrders] = useState([
-    {
-      id: "ORD-1001",
-      bookName: "Clean Code",
-      customer: "John Doe",
-      date: "2025-12-01",
-      price: 499,
-      status: "pending",
-    },
-    {
-      id: "ORD-1002",
-      bookName: "You Don't Know JS",
-      customer: "Jane Smith",
-      date: "2025-12-02",
-      price: 399,
-      status: "shipped",
-    },
-    {
-      id: "ORD-1003",
-      bookName: "Refactoring",
-      customer: "Alex Brown",
-      date: "2025-12-03",
-      price: 599,
-      status: "delivered",
-    },
-  ]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 🔹 Fetch all orders + invoices for librarian
+  useEffect(() => {
+    Promise.all([
+      fetch("http://localhost:3000/orders").then((res) => res.json()),
+      fetch("http://localhost:3000/invoices").then((res) => res.json()),
+    ])
+      .then(([ordersData, invoicesData]) => {
+        // Map invoices to match orders structure
+        const paidOrders = invoicesData.map((inv) => ({
+          ...inv,
+          status: "paid",
+        }));
+
+        setOrders([...ordersData, ...paidOrders]);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch orders", err);
+        setLoading(false);
+      });
+  }, []);
+
+  // 🔹 Update order status
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const res = await fetch(`http://localhost:3000/orders/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update status");
+
+      setOrders((prev) =>
+        prev.map((order) =>
+          order._id === id ? { ...order, status: newStatus } : order
+        )
+      );
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update order status");
+    }
+  };
 
   // 🔹 Cancel order
-  const handleCancel = (id) => {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === id
-          ? { ...order, status: "cancelled" }
-          : order
-      )
-    );
+  const handleCancel = async (id) => {
+    if (!window.confirm("Cancel this order?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/orders/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Failed to cancel order");
+
+      setOrders((prev) =>
+        prev.map((order) =>
+          order._id === id ? { ...order, status: "cancelled" } : order
+        )
+      );
+    } catch (error) {
+      console.error(error);
+      alert("Failed to cancel order");
+    }
   };
 
-  // 🔹 Change order status
-  const handleStatusChange = (id, newStatus) => {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === id
-          ? { ...order, status: newStatus }
-          : order
-      )
-    );
-  };
+  if (loading) {
+    return <p className="text-center mt-20">Loading orders...</p>;
+  }
 
   return (
     <div
@@ -74,9 +97,10 @@ const AllOrders = () => {
                 className={`text-sm uppercase
                 ${dark ? "text-gray-300" : "text-gray-600"}`}
               >
-                <th>Order ID</th>
+                <th>#</th>
                 <th>Book</th>
-                <th>Customer</th>
+                <th>User</th>
+                <th>Email</th>
                 <th>Date</th>
                 <th>Amount</th>
                 <th>Status</th>
@@ -85,12 +109,13 @@ const AllOrders = () => {
             </thead>
 
             <tbody>
-              {orders.map((order) => (
-                <tr key={order.id}>
-                  <td>{order.id}</td>
-                  <td className="font-semibold">{order.bookName}</td>
-                  <td>{order.customer}</td>
-                  <td>{order.date}</td>
+              {orders.map((order, index) => (
+                <tr key={order._id}>
+                  <td>{index + 1}</td>
+                  <td className="font-semibold">{order.bookTitle}</td>
+                  <td>{order.userName}</td>
+                  <td className="text-sm opacity-80">{order.userEmail}</td>
+                  <td>{new Date(order.createdAt).toLocaleDateString()}</td>
                   <td>৳ {order.price}</td>
 
                   {/* Status */}
@@ -104,6 +129,8 @@ const AllOrders = () => {
                             ? "badge-info"
                             : order.status === "delivered"
                             ? "badge-success"
+                            : order.status === "paid"
+                            ? "badge-success"
                             : "badge-error"
                         }`}
                     >
@@ -113,35 +140,23 @@ const AllOrders = () => {
 
                   {/* Actions */}
                   <td className="flex gap-2">
-                    {/* Status Dropdown */}
-                    {(order.status === "pending" ||
-                      order.status === "shipped") && (
+                    {(order.status === "pending" || order.status === "shipped") && (
                       <select
                         value={order.status}
-                        onChange={(e) =>
-                          handleStatusChange(
-                            order.id,
-                            e.target.value
-                          )
-                        }
-                        className={`select select-sm
-                          ${dark ? "bg-gray-700 text-white" : ""}`}
+                        onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                        className={`select select-sm ${dark ? "bg-gray-700 text-white" : ""}`}
                       >
                         <option value="pending">Pending</option>
                         <option value="shipped">Shipped</option>
-                        {order.status === "shipped" && (
-                          <option value="delivered">
-                            Delivered
-                          </option>
-                        )}
+                        {order.status === "shipped" && <option value="delivered">Delivered</option>}
                       </select>
                     )}
 
-                    {/* Cancel Button */}
                     {order.status !== "delivered" &&
-                      order.status !== "cancelled" && (
+                      order.status !== "cancelled" &&
+                      order.status !== "paid" && (
                         <button
-                          onClick={() => handleCancel(order.id)}
+                          onClick={() => handleCancel(order._id)}
                           className="btn btn-sm btn-error"
                         >
                           Cancel
@@ -153,7 +168,7 @@ const AllOrders = () => {
 
               {orders.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="text-center py-6">
+                  <td colSpan="8" className="text-center py-6">
                     No orders found
                   </td>
                 </tr>

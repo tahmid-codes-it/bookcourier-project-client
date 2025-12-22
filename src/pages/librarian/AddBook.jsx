@@ -1,157 +1,146 @@
 import React, { useState } from "react";
 import { useTheme } from "../../context/ThemeContext";
+import { useAuth } from "../../context/AuthContext";
 
 const AddBook = () => {
   const { dark } = useTheme();
+  const { user } = useAuth(); // get logged-in librarian
 
-  const [imagePreview, setImagePreview] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // 🔹 Handle image preview only
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  // 🔹 Submit handler
-  const handleAddBook = (e) => {
+  // 🔹 Submit handler (REAL SAVE)
+  const handleAddBook = async (e) => {
     e.preventDefault();
     setMessage("");
+    setLoading(true);
 
     const form = e.target;
 
+    // Build the book object
     const bookData = {
       title: form.title.value,
       author: form.author.value,
-      price: form.price.value,
-      status: form.status.value,
+      price: Number(form.price.value),
+      category: form.category.value || "General",
       description: form.description.value,
-      // image file not uploaded yet
+      coverImage:
+        form.coverImage.value ||
+        "https://via.placeholder.com/400x600?text=No+Image",
+      stock: 1,
+      published: true, // initially published
+      createdAt: new Date(),
+      createdBy: user._id, // <-- Use unique ID for librarian
     };
 
-    console.log("📘 New Book:", bookData);
+    try {
+      const res = await fetch("http://localhost:3000/books", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookData),
+      });
 
-    setMessage("Book added successfully (demo mode) ✅");
-    form.reset();
-    setImagePreview("");
+      if (!res.ok) throw new Error("Failed to add book");
+
+      setMessage("Book added successfully ✅");
+      form.reset();
+    } catch (error) {
+      console.error(error);
+      setMessage("Failed to add book ❌");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div
-      className={`min-h-screen px-6 py-10 transition-colors duration-300
-      ${dark ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"}`}
+      className={`min-h-screen px-6 py-10 transition-colors duration-300 ${
+        dark ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
+      }`}
     >
       <div
-        className={`max-w-3xl mx-auto p-8 rounded-2xl shadow-lg
-        ${dark ? "bg-gray-800" : "bg-white"}`}
+        className={`max-w-3xl mx-auto p-8 rounded-2xl shadow-lg ${
+          dark ? "bg-gray-800" : "bg-white"
+        }`}
       >
         <h2 className="text-3xl font-bold mb-6">Add New Book</h2>
 
         <form onSubmit={handleAddBook} className="space-y-5">
           {/* Book Name */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Book Name
-            </label>
+            <label className="block text-sm font-medium mb-1">Book Name</label>
             <input
               name="title"
               type="text"
               required
-              placeholder="Enter book title"
-              className={`input input-bordered w-full
-                ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
+              className="input input-bordered w-full"
             />
           </div>
 
           {/* Author */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Author Name
-            </label>
+            <label className="block text-sm font-medium mb-1">Author Name</label>
             <input
               name="author"
               type="text"
               required
-              placeholder="Enter author name"
-              className={`input input-bordered w-full
-                ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
+              className="input input-bordered w-full"
             />
           </div>
 
           {/* Price */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Price
-            </label>
+            <label className="block text-sm font-medium mb-1">Price</label>
             <input
               name="price"
               type="number"
               required
-              placeholder="Enter price"
-              className={`input input-bordered w-full
-                ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
+              className="input input-bordered w-full"
             />
           </div>
 
-          {/* Status */}
+          {/* Category */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Status
-            </label>
-            <select
-              name="status"
-              className={`select select-bordered w-full
-                ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
-            >
-              <option value="published">Published</option>
-              <option value="unpublished">Unpublished</option>
-            </select>
+            <label className="block text-sm font-medium mb-1">Category</label>
+            <input
+              name="category"
+              type="text"
+              placeholder="Optional"
+              className="input input-bordered w-full"
+            />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Description
-            </label>
+            <label className="block text-sm font-medium mb-1">Description</label>
             <textarea
               name="description"
               rows="4"
-              placeholder="Short description about the book"
-              className={`textarea textarea-bordered w-full
-                ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
+              className="textarea textarea-bordered w-full"
+              required
             ></textarea>
           </div>
 
-          {/* Image Upload (Preview only) */}
+          {/* Cover Image URL */}
           <div>
             <label className="block text-sm font-medium mb-1">
-              Book Image (Preview)
+              Book Cover Image URL
             </label>
             <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className={`file-input file-input-bordered w-full
-                ${dark ? "bg-gray-700 border-gray-600 text-white" : ""}`}
+              name="coverImage"
+              type="text"
+              placeholder="Enter image URL"
+              className="input input-bordered w-full"
             />
-            <p className="text-xs opacity-70 mt-1">
-              * Image preview only (no upload yet)
-            </p>
-
-            {imagePreview && (
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="mt-4 h-48 object-contain rounded-lg border"
-              />
-            )}
           </div>
 
           {/* Message */}
           {message && (
-            <p className="text-green-500 text-sm font-medium">
+            <p
+              className={`text-sm font-medium ${
+                message.includes("success") ? "text-green-500" : "text-red-500"
+              }`}
+            >
               {message}
             </p>
           )}
@@ -159,9 +148,10 @@ const AddBook = () => {
           {/* Submit */}
           <button
             type="submit"
+            disabled={loading}
             className="btn btn-primary w-full text-lg"
           >
-            Add Book
+            {loading ? "Adding..." : "Add Book"}
           </button>
         </form>
       </div>

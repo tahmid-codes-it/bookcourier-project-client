@@ -51,7 +51,7 @@ const router = createBrowserRouter([
       // 👑 ADMIN ROUTES (accessible via dropdown in profile)
       { path: "all-users", element: <AllUsers /> },
       { path: "manage-books", element: <ManageBooks /> },
-      { path: "profile", element: <AdminProfile /> },
+      { path: "my-profile", element: <AdminProfile /> },
     ],
   },
 

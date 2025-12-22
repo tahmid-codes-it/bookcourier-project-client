@@ -4,6 +4,8 @@ import Skiper52 from "../components/Skiper52"; // Animated section (can be galle
 
 const Home = () => {
   const [latestBooks, setLatestBooks] = useState([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
   const slides = [
     {
       id: 1,
@@ -32,57 +34,92 @@ const Home = () => {
       .catch((err) => console.error(err));
   }, []);
 
+  // Auto slide every 4 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [slides.length]);
+
   return (
     <div className="pt-24">
       {/* Hero Carousel */}
-      <div className="carousel w-full h-[450px] rounded-lg shadow-lg">
+      <div className="relative w-full h-[450px] rounded-lg shadow-lg overflow-hidden">
         {slides.map((slide, index) => (
-          <div key={slide.id} id={`slide${index + 1}`} className="carousel-item relative w-full">
+          <div
+            key={slide.id}
+            className={`absolute w-full h-full transition-opacity duration-1000 ${
+              index === currentSlide ? "opacity-100" : "opacity-0"
+            }`}
+          >
             <img
               src={slide.img}
-              className="w-full object-cover brightness-75"
+              className="w-full h-full object-cover brightness-75"
               alt={slide.title}
             />
             <div className="absolute inset-0 flex flex-col items-start justify-center p-10 text-white">
               <h1 className="text-4xl font-bold mb-4 drop-shadow-lg">{slide.title}</h1>
               <p className="text-lg mb-6 max-w-xl drop-shadow-lg">{slide.desc}</p>
               <Link
-                to="/books"
+                to="/all-books"
                 className="px-5 py-3 bg-blue-600 hover:bg-blue-700 rounded-md font-semibold"
               >
                 View All Books
               </Link>
             </div>
-            <div className="absolute flex justify-between transform -translate-y-1/2 left-5 right-5 top-1/2">
-              <a href={`#slide${index === 0 ? slides.length : index}`} className="btn btn-circle">❮</a>
-              <a href={`#slide${index === slides.length - 1 ? 1 : index + 2}`} className="btn btn-circle">❯</a>
-            </div>
           </div>
         ))}
+
+        {/* Manual Navigation */}
+        <div className="absolute flex justify-between transform -translate-y-1/2 left-5 right-5 top-1/2">
+          <button
+            onClick={() =>
+              setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1))
+            }
+            className="btn btn-circle"
+          >
+            ❮
+          </button>
+          <button
+            onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
+            className="btn btn-circle"
+          >
+            ❯
+          </button>
+        </div>
       </div>
 
       {/* Animated Section */}
-<div className="mt-16 max-w-6xl mx-auto px-6">
-  <h2 className="text-3xl font-bold mb-6 text-center">
-    Best Seller Books of All Time
-  </h2>
-  <Skiper52 books={latestBooks.sort((a, b) => b.price - a.price).slice(0, 6)} />
-</div>
+      <div className="mt-16 max-w-6xl mx-auto px-6">
+        <h2 className="text-3xl font-bold mb-6 text-center">
+          Best Seller Books of All Time
+        </h2>
+        <Skiper52 books={latestBooks.sort((a, b) => b.price - a.price).slice(0, 6)} />
+      </div>
 
       {/* Latest Books Section */}
       <section className="my-16 max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold mb-8 text-center">Latest Books</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {latestBooks.map((book) => (
-            <div key={book._id} className="bg-white shadow-lg rounded-lg overflow-hidden hover:scale-105 transition-transform">
-              <img src={book.coverImage} alt={book.title} className="w-full h-48 object-cover"/>
-              <div className="p-4">
-                <h3 className="font-semibold text-lg">{book.title}</h3>
-                <p className="text-sm text-gray-600 mb-2">{book.description?.slice(0, 60)}...</p>
-                <Link to="/books" className="text-blue-600 hover:underline">View Book</Link>
+          {latestBooks
+            .sort((a, b) => b.price - a.price)
+            .slice(0, 6)
+            .map((book) => (
+              <div
+                key={book._id}
+                className="bg-white shadow-lg rounded-lg overflow-hidden hover:scale-105 transition-transform"
+              >
+                <img src={book.coverImage} alt={book.title} className="w-full h-48 object-cover" />
+                <div className="p-4">
+                  <h3 className="font-semibold text-lg">{book.title}</h3>
+                  <p className="text-sm text-gray-600 mb-2">{book.description?.slice(0, 60)}...</p>
+                  <Link to={`/all-books/${book._id}`} className="text-blue-600 hover:underline">
+                    View Book
+                  </Link>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </section>
 
@@ -109,15 +146,21 @@ const Home = () => {
         <div className="grid md:grid-cols-3 gap-8">
           <div className="bg-white shadow-lg rounded-lg p-6 hover:shadow-2xl transition-shadow">
             <h3 className="font-semibold text-xl mb-2">Fast Delivery</h3>
-            <p className="text-gray-600">Get your books delivered in record time without any hassle.</p>
+            <p className="text-gray-600">
+              Get your books delivered in record time without any hassle.
+            </p>
           </div>
           <div className="bg-white shadow-lg rounded-lg p-6 hover:shadow-2xl transition-shadow">
             <h3 className="font-semibold text-xl mb-2">Trusted Libraries</h3>
-            <p className="text-gray-600">We partner with verified libraries to ensure book quality and availability.</p>
+            <p className="text-gray-600">
+              We partner with verified libraries to ensure book quality and availability.
+            </p>
           </div>
           <div className="bg-white shadow-lg rounded-lg p-6 hover:shadow-2xl transition-shadow">
             <h3 className="font-semibold text-xl mb-2">Affordable Prices</h3>
-            <p className="text-gray-600">Enjoy competitive prices with flexible delivery options.</p>
+            <p className="text-gray-600">
+              Enjoy competitive prices with flexible delivery options.
+            </p>
           </div>
         </div>
       </section>
@@ -127,11 +170,15 @@ const Home = () => {
         <h2 className="text-3xl font-bold mb-8 text-center">What People Say</h2>
         <div className="max-w-4xl mx-auto grid sm:grid-cols-2 gap-6">
           <div className="bg-white p-6 rounded-lg shadow-lg">
-            <p className="text-gray-600">"BookCourier saved me so much time! Highly recommended."</p>
+            <p className="text-gray-600">
+              "BookCourier saved me so much time! Highly recommended."
+            </p>
             <p className="font-semibold mt-4">— Sarah M.</p>
           </div>
           <div className="bg-white p-6 rounded-lg shadow-lg">
-            <p className="text-gray-600">"Quick delivery and great collection of books."</p>
+            <p className="text-gray-600">
+              "Quick delivery and great collection of books."
+            </p>
             <p className="font-semibold mt-4">— Ahmed K.</p>
           </div>
         </div>
@@ -141,7 +188,9 @@ const Home = () => {
       <section className="my-16 bg-blue-50 py-12">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Stay Updated!</h2>
-          <p className="text-gray-700 mb-6">Subscribe to our newsletter and never miss new books and offers.</p>
+          <p className="text-gray-700 mb-6">
+            Subscribe to our newsletter and never miss new books and offers.
+          </p>
           <input
             type="email"
             placeholder="Enter your email"

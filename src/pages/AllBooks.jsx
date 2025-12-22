@@ -64,7 +64,7 @@ const AllBooks = () => {
             />
             <h3 className="text-lg font-semibold">{book.title}</h3>
             <p className="text-sm opacity-80">{book.author}</p>
-            <p className="mt-2 font-medium">Price: ৳{book.price}</p>
+            <p className="mt-2 font-medium">Price: ৳ {book.price}</p>
             {book.published === false && (
               <p className="text-xs text-yellow-400 mt-1">Unpublished</p>
             )}

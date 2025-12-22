@@ -11,13 +11,18 @@ const Invoices = () => {
   useEffect(() => {
     if (!user) return;
 
-    fetch(`http://localhost:3000/invoices?email=${user.email}`)
+    const email = user.email.toLowerCase(); // Ensure consistent casing
+    fetch(`http://localhost:3000/invoices?email=${email}`)
       .then((res) => res.json())
       .then((data) => {
+        console.log("Invoices fetched:", data); // Debug log
         setInvoices(data);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        console.error("Error fetching invoices:", err);
+        setLoading(false);
+      });
   }, [user]);
 
   return (
@@ -66,11 +71,19 @@ const Invoices = () => {
                     }`}
                   >
                     <td>{index + 1}</td>
-                    <td className="font-mono text-sm">{invoice.paymentId}</td>
+                    <td className="font-mono text-sm">{invoice.paymentId || "—"}</td>
                     <td>{invoice.bookTitle || "—"}</td>
                     <td>{invoice.paymentMethod || "—"}</td>
-                    <td className="font-semibold">৳ 180</td>
-                    <td>{new Date(invoice.paidAt).toLocaleDateString()}</td>
+                    <td className="font-semibold">
+                      {invoice.price
+                        ? `৳ ${invoice.price + 60}`
+                        : "—"} {/* Add 60 Tk delivery */}
+                    </td>
+                    <td>
+                      {invoice.paidAt
+                        ? new Date(invoice.paidAt).toLocaleDateString()
+                        : "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>

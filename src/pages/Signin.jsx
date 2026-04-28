@@ -3,23 +3,27 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "react-toastify";
-import { useAuth } from "../context/AuthContext"; // ✅ ADDED
+import { useAuth } from "../context/AuthContext";
 
 import signinImg from "../assets/book_stack.png";
 
 const SignIn = () => {
   const { dark } = useTheme();
-  const { login } = useAuth(); // ✅ ADDED
+  const { login } = useAuth();
   const [showPass, setShowPass] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  // ✅ Get dynamic API URL from your .env
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:3000/login", {
+      // ✅ Updated to use dynamic API_URL
+      const res = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -31,7 +35,6 @@ const SignIn = () => {
         throw new Error(data.message || "Login failed");
       }
 
-      // ✅ FIX: update AuthContext instead of only localStorage
       login({
         email: data.email,
         role: data.role,
@@ -39,7 +42,6 @@ const SignIn = () => {
 
       toast.success("Login successful!");
 
-      // ✅ ROLE BASED REDIRECT
       if (data.role === "admin") {
         navigate("/all-users");
       } else if (data.role === "librarian") {
@@ -72,7 +74,6 @@ const SignIn = () => {
         className={`w-full max-w-4xl shadow-xl rounded-2xl overflow-hidden flex flex-col md:flex-row
         ${dark ? "bg-gray-800 text-white" : "bg-white text-gray-900"} relative`}
       >
-        {/* Logo */}
         <div className="absolute top-4 left-4 z-10">
           <Link to="/" className="flex items-center gap-2 text-xl font-bold">
             <span className="bg-blue-600 text-white px-2 py-1 rounded-md">
@@ -81,7 +82,6 @@ const SignIn = () => {
           </Link>
         </div>
 
-        {/* Image */}
         <div className="w-full md:w-1/2 hidden md:flex items-center justify-center">
           <img
             src={signinImg}
@@ -90,7 +90,6 @@ const SignIn = () => {
           />
         </div>
 
-        {/* Form */}
         <div className="w-full md:w-1/2 p-8 md:p-10 mt-7 md:mt-0">
           <h2 className="text-3xl font-bold mb-2 mt-4">Welcome Back</h2>
           <p className={`${dark ? "text-gray-300" : "text-gray-600"} mb-6`}>
@@ -98,7 +97,6 @@ const SignIn = () => {
           </p>
 
           <form className="space-y-4" onSubmit={handleLogin}>
-            {/* Email */}
             <div>
               <label className="text-sm font-medium">Email</label>
               <input
@@ -112,7 +110,6 @@ const SignIn = () => {
               />
             </div>
 
-            {/* Password */}
             <div>
               <label className="text-sm font-medium">Password</label>
               <div className="relative">
@@ -135,7 +132,6 @@ const SignIn = () => {
               </div>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               className="btn btn-primary w-full mt-4 text-lg"

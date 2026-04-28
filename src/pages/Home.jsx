@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import Skiper52 from "../components/Skiper52"; // Animated section (can be gallery/slider)
+import Skiper52 from "../components/Skiper52"; // Animated section
+import { useTheme } from "../context/ThemeContext"; // ✅ Added
 
 const Home = () => {
+  const { dark } = useTheme(); // ✅ Added
   const [latestBooks, setLatestBooks] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
+  
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
   const slides = [
     {
@@ -28,13 +32,12 @@ const Home = () => {
   ];
 
   useEffect(() => {
-    fetch("http://localhost:3000/books?limit=6") // Adjust backend to support ?limit
+    fetch(`${API_URL}/books`)
       .then((res) => res.json())
       .then((data) => setLatestBooks(data))
-      .catch((err) => console.error(err));
-  }, []);
+      .catch((err) => console.error("Home fetch error:", err));
+  }, [API_URL]);
 
-  // Auto slide every 4 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -43,7 +46,9 @@ const Home = () => {
   }, [slides.length]);
 
   return (
-    <div className="pt-24">
+    // ✅ Main wrapper handles background and text color switch
+    <div className={`pt-24 transition-colors duration-300 ${dark ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
+      
       {/* Hero Carousel */}
       <div className="relative w-full h-[450px] rounded-lg shadow-lg overflow-hidden">
         {slides.map((slide, index) => (
@@ -77,13 +82,13 @@ const Home = () => {
             onClick={() =>
               setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1))
             }
-            className="btn btn-circle"
+            className={`btn btn-circle ${dark ? "bg-gray-800 border-gray-700 text-white" : ""}`}
           >
             ❮
           </button>
           <button
             onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
-            className="btn btn-circle"
+            className={`btn btn-circle ${dark ? "bg-gray-800 border-gray-700 text-white" : ""}`}
           >
             ❯
           </button>
@@ -99,7 +104,7 @@ const Home = () => {
       </div>
 
       {/* Latest Books Section */}
-      <section className="my-16 max-w-6xl mx-auto">
+      <section className="my-16 max-w-6xl mx-auto px-6">
         <h2 className="text-3xl font-bold mb-8 text-center">Latest Books</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {latestBooks
@@ -108,13 +113,17 @@ const Home = () => {
             .map((book) => (
               <div
                 key={book._id}
-                className="bg-white shadow-lg rounded-lg overflow-hidden hover:scale-105 transition-transform"
+                className={`shadow-lg rounded-lg overflow-hidden hover:scale-105 transition-all ${
+                  dark ? "bg-gray-800 border border-gray-700" : "bg-white"
+                }`}
               >
                 <img src={book.coverImage} alt={book.title} className="w-full h-48 object-cover" />
                 <div className="p-4">
                   <h3 className="font-semibold text-lg">{book.title}</h3>
-                  <p className="text-sm text-gray-600 mb-2">{book.description?.slice(0, 60)}...</p>
-                  <Link to={`/all-books/${book._id}`} className="text-blue-600 hover:underline">
+                  <p className={`text-sm mb-2 ${dark ? "text-gray-400" : "text-gray-600"}`}>
+                    {book.description?.slice(0, 60)}...
+                  </p>
+                  <Link to={`/all-books/${book._id}`} className="text-blue-500 font-medium hover:underline">
                     View Book
                   </Link>
                 </div>
@@ -124,9 +133,9 @@ const Home = () => {
       </section>
 
       {/* Coverage Section */}
-      <section className="my-16 bg-blue-50 py-12">
+      <section className={`my-16 py-12 transition-colors ${dark ? "bg-gray-800" : "bg-blue-50"}`}>
         <h2 className="text-3xl font-bold mb-8 text-center">Coverage</h2>
-        <div className="max-w-6xl mx-auto flex justify-center">
+        <div className="max-w-6xl mx-auto flex justify-center px-6">
           <iframe
             title="Book Delivery Coverage"
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14661.983442905383!2d90.39945298334569!3d23.777176307718305!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8b1f1c2e7b1%3A0x92a8a1c9f79f2d9d!2sDhaka!5e0!3m2!1sen!2sbd!4v1600000000000!5m2!1sen!2sbd"
@@ -135,7 +144,7 @@ const Home = () => {
             style={{ border: 0 }}
             allowFullScreen=""
             loading="lazy"
-            className="rounded-lg shadow-lg"
+            className={`rounded-lg shadow-lg ${dark ? "grayscale invert opacity-80" : ""}`}
           />
         </div>
       </section>
@@ -144,61 +153,59 @@ const Home = () => {
       <section className="my-16 max-w-6xl mx-auto px-6">
         <h2 className="text-3xl font-bold mb-8 text-center">Why Choose BookCourier?</h2>
         <div className="grid md:grid-cols-3 gap-8">
-          <div className="bg-white shadow-lg rounded-lg p-6 hover:shadow-2xl transition-shadow">
-            <h3 className="font-semibold text-xl mb-2">Fast Delivery</h3>
-            <p className="text-gray-600">
-              Get your books delivered in record time without any hassle.
-            </p>
-          </div>
-          <div className="bg-white shadow-lg rounded-lg p-6 hover:shadow-2xl transition-shadow">
-            <h3 className="font-semibold text-xl mb-2">Trusted Libraries</h3>
-            <p className="text-gray-600">
-              We partner with verified libraries to ensure book quality and availability.
-            </p>
-          </div>
-          <div className="bg-white shadow-lg rounded-lg p-6 hover:shadow-2xl transition-shadow">
-            <h3 className="font-semibold text-xl mb-2">Affordable Prices</h3>
-            <p className="text-gray-600">
-              Enjoy competitive prices with flexible delivery options.
-            </p>
-          </div>
+          {[
+            { t: "Fast Delivery", d: "Get your books delivered in record time without any hassle." },
+            { t: "Trusted Libraries", d: "We partner with verified libraries to ensure book quality and availability." },
+            { t: "Affordable Prices", d: "Enjoy competitive prices with flexible delivery options." }
+          ].map((item, idx) => (
+            <div key={idx} className={`shadow-lg rounded-lg p-6 hover:shadow-2xl transition-all ${
+              dark ? "bg-gray-800 border border-gray-700" : "bg-white"
+            }`}>
+              <h3 className="font-semibold text-xl mb-2">{item.t}</h3>
+              <p className={dark ? "text-gray-400" : "text-gray-600"}>{item.d}</p>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* Extra Section 1 - Testimonials */}
-      <section className="my-16 bg-gray-100 py-12">
+      <section className={`my-16 py-12 transition-colors ${dark ? "bg-gray-900" : "bg-gray-100"}`}>
         <h2 className="text-3xl font-bold mb-8 text-center">What People Say</h2>
-        <div className="max-w-4xl mx-auto grid sm:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <p className="text-gray-600">
+        <div className="max-w-4xl mx-auto grid sm:grid-cols-2 gap-6 px-6">
+          <div className={`p-6 rounded-lg shadow-lg ${dark ? "bg-gray-800" : "bg-white"}`}>
+            <p className={dark ? "text-gray-300" : "text-gray-600"}>
               "BookCourier saved me so much time! Highly recommended."
             </p>
-            <p className="font-semibold mt-4">— Sarah M.</p>
+            <p className="font-semibold mt-4 text-blue-500">— Sarah M.</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <p className="text-gray-600">
+          <div className={`p-6 rounded-lg shadow-lg ${dark ? "bg-gray-800" : "bg-white"}`}>
+            <p className={dark ? "text-gray-300" : "text-gray-600"}>
               "Quick delivery and great collection of books."
             </p>
-            <p className="font-semibold mt-4">— Ahmed K.</p>
+            <p className="font-semibold mt-4 text-blue-500">— Ahmed K.</p>
           </div>
         </div>
       </section>
 
       {/* Extra Section 2 - Newsletter Signup */}
-      <section className="my-16 bg-blue-50 py-12">
-        <div className="max-w-3xl mx-auto text-center">
+      <section className={`my-16 py-12 transition-colors ${dark ? "bg-gray-800" : "bg-blue-50"}`}>
+        <div className="max-w-3xl mx-auto text-center px-6">
           <h2 className="text-3xl font-bold mb-4">Stay Updated!</h2>
-          <p className="text-gray-700 mb-6">
+          <p className={`mb-6 ${dark ? "text-gray-400" : "text-gray-700"}`}>
             Subscribe to our newsletter and never miss new books and offers.
           </p>
-          <input
-            type="email"
-            placeholder="Enter your email"
-            className="p-3 rounded-l-md border border-gray-300 w-2/3"
-          />
-          <button className="px-5 py-3 bg-blue-600 text-white rounded-r-md font-semibold hover:bg-blue-700">
-            Subscribe
-          </button>
+          <div className="flex justify-center">
+            <input
+              type="email"
+              placeholder="Enter your email"
+              className={`p-3 rounded-l-md border w-2/3 outline-none ${
+                dark ? "bg-gray-700 border-gray-600 text-white placeholder:text-gray-400" : "border-gray-300"
+              }`}
+            />
+            <button className="px-5 py-3 bg-blue-600 text-white rounded-r-md font-semibold hover:bg-blue-700">
+              Subscribe
+            </button>
+          </div>
         </div>
       </section>
     </div>

@@ -10,14 +10,15 @@ const AllBooks = () => {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
   const fetchBooks = async () => {
     setLoading(true);
     try {
       // Switch endpoint based on role
       const endpoint =
         user?.role === "admin" || user?.role === "librarian"
-          ? "http://localhost:3000/books/manage"
-          : "http://localhost:3000/books";
+          ? `${API_URL}/books/manage`
+          : `${API_URL}/books`;
 
       const res = await fetch(endpoint);
       const data = await res.json();

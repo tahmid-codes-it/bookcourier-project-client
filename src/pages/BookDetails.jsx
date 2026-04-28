@@ -14,9 +14,10 @@ const BookDetails = () => {
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
   // 🔹 Fetch single book
   useEffect(() => {
-    fetch(`http://localhost:3000/books/${id}`)
+    fetch(`${API_URL}/books/${id}`)
       .then((res) => res.json())
       .then((data) => setBook(data))
       .catch((err) => console.error(err));
@@ -43,7 +44,7 @@ const BookDetails = () => {
     };
 
     try {
-      const res = await fetch("http://localhost:3000/orders", {
+      const res = await fetch(`${API_URL}/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),
